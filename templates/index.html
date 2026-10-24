@@ -1,0 +1,521 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Campus Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">🎓</div>
+            <div>
+                <h2>Smart Campus</h2>
+                <p>AI Student Assistant</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#dashboard" class="nav-link active">⌂ Dashboard</a>
+            <a href="#announcements" class="nav-link">◉ Announcements</a>
+            <a href="#assistant" class="nav-link">✦ AI Assistant</a>
+            <a href="#timetable" class="nav-link">▦ Timetable</a>
+            <a href="#exams" class="nav-link">▤ Exam Schedule</a>
+            <a href="#library" class="nav-link">▣ Library</a>
+        </nav>
+
+        <div class="sidebar-status">
+            <span class="status-dot"></span>
+            Assistant is online
+        </div>
+
+        <div class="sidebar-footer">
+            <p>Smart Campus Assistant</p>
+            <small>Your campus, simplified.</small>
+        </div>
+    </aside>
+
+    <main class="main-content" id="dashboard">
+        <header class="topbar">
+            <div>
+                <h2>Student Dashboard</h2>
+                <p>Your campus information in one place</p>
+            </div>
+            <input id="campusSearch" type="search"
+                   placeholder="Search campus information..."
+                   aria-label="Search campus information">
+        </header>
+
+        <div class="page-content">
+            <section class="welcome-banner">
+                <div>
+                    <span class="welcome-label">SMART CAMPUS PORTAL</span>
+                    <h1>Welcome to your campus! 👋</h1>
+                    <p>Ask questions, check your timetable, view exam information,
+                       and explore campus resources.</p>
+                    <a class="banner-button" href="#assistant">Ask AI Assistant →</a>
+                </div>
+                <div class="welcome-art" aria-hidden="true">🏫</div>
+            </section>
+
+            <section class="stats-grid" id="resources">
+                <article class="stat-card">
+                    <div class="stat-icon">✦</div>
+                    <h3>AI Assistant</h3>
+                    <p>Ask campus-related questions.</p>
+                    <a href="#assistant">Start chatting →</a>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">▦</div>
+                    <h3>Class Timetable</h3>
+                    <p>View classes by weekday.</p>
+                    <a href="#timetable">View timetable →</a>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon">▣</div>
+                    <h3>Campus Library</h3>
+                    <p>Explore library information.</p>
+                    <a href="#library">Explore library →</a>
+                </article>
+            </section>
+
+            <div class="content-grid">
+                <section class="panel" id="announcements">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Campus Announcements</h2>
+                            <p>Updates from your campus</p>
+                        </div>
+                        <button type="button" class="load-button"
+                                id="refreshAnnouncements">Refresh</button>
+                    </div>
+
+                    <div id="announcementList" class="feature-list">
+                        {% if announcements %}
+                            {% for item in announcements %}
+                            <article class="announcement feature-item">
+                                <h3>{{ item.title }}</h3>
+                                <p>{{ item.message }}</p>
+                            </article>
+                            {% endfor %}
+                        {% else %}
+                            <p class="feature-empty">No announcements available.</p>
+                        {% endif %}
+                    </div>
+                    <p id="announcementStatus" class="feature-status"
+                       aria-live="polite"></p>
+                </section>
+
+                <section class="panel chat-panel" id="assistant">
+                    <div class="section-heading">
+                        <div>
+                            <h2>AI Campus Assistant</h2>
+                            <p>Ask me anything about campus</p>
+                        </div>
+                        <span class="online-badge">
+                            <span class="status-dot"></span> Online
+                        </span>
+                    </div>
+
+                    <div class="chat-intro">
+                        <div class="bot-avatar">✦</div>
+                        <div>
+                            <strong>Hello, student!</strong>
+                            <p>I can help you find campus information quickly.</p>
+                        </div>
+                    </div>
+
+                    <div class="suggestion-list">
+                        <button type="button" class="suggestion"
+                                data-question="Show me the timetable">
+                            📅 Show timetable
+                        </button>
+                        <button type="button" class="suggestion"
+                                data-question="Tell me about the library">
+                            📚 Library information
+                        </button>
+                        <button type="button" class="suggestion"
+                                data-question="Show exam schedule">
+                            📝 Exam schedule
+                        </button>
+                        <button type="button" class="suggestion"
+                                data-question="Show announcements">
+                            📢 Announcements
+                        </button>
+                    </div>
+
+                    <div id="chatMessages" class="chat-messages"
+                         aria-live="polite" aria-label="Chat messages">
+                        <div class="message bot-message">
+                            Hi! Ask me about your timetable, exams, library,
+                            or campus announcements.
+                        </div>
+                    </div>
+
+                    <form id="chatForm" class="chat-form">
+                        <input id="chatInput" type="text"
+                               placeholder="Type your question..."
+                               autocomplete="off" required>
+                        <button id="sendButton" type="submit">Send ➤</button>
+                    </form>
+                    <p id="chatStatus" class="feature-status"
+                       aria-live="polite"></p>
+                </section>
+            </div>
+
+            <section class="panel feature-section" id="timetable">
+                <div class="section-heading">
+                    <div>
+                        <h2>📅 Class Timetable</h2>
+                        <p>Choose a weekday to view scheduled classes.</p>
+                    </div>
+                </div>
+
+                <div class="feature-toolbar">
+                    <label for="timetableDay">Select day</label>
+                    <select id="timetableDay" class="weekday-select">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                    </select>
+                    <button type="button" class="load-button"
+                            id="loadTimetable">Load timetable</button>
+                </div>
+
+                <p class="demo-notice">
+                    Timetable entries are sample data. Confirm class times
+                    with your college before relying on them.
+                </p>
+                <div id="timetableList" class="feature-grid">
+                    <p class="feature-empty">Loading timetable...</p>
+                </div>
+                <p id="timetableStatus" class="feature-status"
+                   aria-live="polite"></p>
+            </section>
+
+            <section class="panel feature-section" id="exams">
+                <div class="section-heading">
+                    <div>
+                        <h2>📝 Exam Schedule</h2>
+                        <p>Review the available exam information.</p>
+                    </div>
+                    <button type="button" class="load-button"
+                            id="refreshExams">Refresh</button>
+                </div>
+
+                <p class="demo-notice">
+                    DEMO DATA ONLY — These are not official exam dates.
+                    Check your college or university notice for confirmed
+                    schedules.
+                </p>
+                <div id="examList" class="feature-grid">
+                    <p class="feature-empty">Loading exam information...</p>
+                </div>
+                <p id="examStatus" class="feature-status"
+                   aria-live="polite"></p>
+            </section>
+
+            <section class="panel feature-section" id="library">
+                <div class="section-heading">
+                    <div>
+                        <h2>📚 Library & Resources</h2>
+                        <p>Find library facilities and useful information.</p>
+                    </div>
+                    <button type="button" class="load-button"
+                            id="refreshLibrary">Refresh</button>
+                </div>
+
+                <p class="demo-notice">
+                    Library information shown here is sample data.
+                    Replace it with verified details from your college.
+                </p>
+                <div id="libraryList" class="feature-grid">
+                    <p class="feature-empty">Loading library information...</p>
+                </div>
+                <p id="libraryStatus" class="feature-status"
+                   aria-live="polite"></p>
+            </section>
+
+            <footer class="page-footer">
+                <p>Smart Campus Assistant · AI-powered college helper</p>
+                <small>Verify important academic information with official
+                    college sources.</small>
+            </footer>
+        </div>
+    </main>
+</div>
+
+<script>
+    const chatForm = document.getElementById("chatForm");
+    const chatInput = document.getElementById("chatInput");
+    const chatMessages = document.getElementById("chatMessages");
+    const sendButton = document.getElementById("sendButton");
+    const chatStatus = document.getElementById("chatStatus");
+
+    function addMessage(text, className) {
+        const message = document.createElement("div");
+        message.className = "message " + className;
+        message.textContent = text;
+        chatMessages.appendChild(message);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return message;
+    }
+
+    async function sendMessage(question) {
+        const messageText = (question || chatInput.value).trim();
+        if (!messageText) return;
+
+        addMessage(messageText, "user-message");
+        chatInput.value = "";
+        sendButton.disabled = true;
+        chatStatus.textContent = "Assistant is thinking...";
+
+        const typing = addMessage("Thinking...", "bot-message");
+
+        try {
+            const response = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: messageText })
+            });
+
+            const data = await response.json();
+            typing.remove();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Unable to process your question.");
+            }
+
+            addMessage(
+                data.response || data.answer || "I couldn't find an answer.",
+                "bot-message"
+            );
+            chatStatus.textContent = "";
+        } catch (error) {
+            typing.remove();
+            addMessage(
+                "Sorry, I couldn't connect to the assistant. Please try again.",
+                "bot-message"
+            );
+            chatStatus.textContent = error.message;
+        } finally {
+            sendButton.disabled = false;
+            chatInput.focus();
+        }
+    }
+
+    chatForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        sendMessage();
+    });
+
+    document.querySelectorAll(".suggestion").forEach(function (button) {
+        button.addEventListener("click", function () {
+            sendMessage(button.dataset.question);
+        });
+    });
+
+    function makeElement(tag, className, text) {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        element.textContent = text == null || text === "" ? "Not provided" : String(text);
+        return element;
+    }
+
+    function showEmpty(container, message) {
+        container.replaceChildren(makeElement("p", "feature-empty", message));
+    }
+
+    async function getJSON(url) {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Request failed.");
+        }
+        return data;
+    }
+
+    async function loadAnnouncements() {
+        const container = document.getElementById("announcementList");
+        const status = document.getElementById("announcementStatus");
+        status.textContent = "Refreshing announcements...";
+
+        try {
+            const data = await getJSON("/api/announcements");
+            const items = data.announcements || [];
+            container.replaceChildren();
+
+            if (!items.length) {
+                showEmpty(container, "No announcements available.");
+            } else {
+                items.forEach(function (item) {
+                    const card = document.createElement("article");
+                    card.className = "announcement feature-item";
+                    card.append(
+                        makeElement("h3", "", item.title),
+                        makeElement("p", "", item.message)
+                    );
+                    container.appendChild(card);
+                });
+            }
+            status.textContent = items.length + " announcement(s) loaded.";
+        } catch (error) {
+            status.textContent = "Could not refresh announcements. Showing available page data.";
+        }
+    }
+
+    async function loadTimetable() {
+        const day = document.getElementById("timetableDay").value;
+        const container = document.getElementById("timetableList");
+        const status = document.getElementById("timetableStatus");
+
+        status.textContent = "Loading timetable...";
+        showEmpty(container, "Loading timetable...");
+
+        try {
+            const data = await getJSON(
+                "/api/timetable?day=" + encodeURIComponent(day)
+            );
+            const items = data.timetable || [];
+            container.replaceChildren();
+
+            if (!items.length) {
+                showEmpty(container, "No classes found for " + day + ".");
+            } else {
+                items.forEach(function (item) {
+                    const card = document.createElement("article");
+                    card.className = "feature-card";
+
+                    card.append(
+                        makeElement("span", "feature-tag", item.day),
+                        makeElement("h3", "", item.subject),
+                        makeElement(
+                            "p", "",
+                            "Time: " + (item.start_time || "—") +
+                            " – " + (item.end_time || "—")
+                        ),
+                        makeElement("p", "", "Room: " + (item.room || "Not provided")),
+                        makeElement("p", "", "Faculty: " + (item.faculty || "Not provided"))
+                    );
+                    container.appendChild(card);
+                });
+            }
+
+            status.textContent = items.length + " class(es) found for " + day + ".";
+        } catch (error) {
+            showEmpty(container, "Unable to load the timetable.");
+            status.textContent = error.message;
+        }
+    }
+
+    async function loadExams() {
+        const container = document.getElementById("examList");
+        const status = document.getElementById("examStatus");
+        status.textContent = "Loading exam information...";
+        showEmpty(container, "Loading exam information...");
+
+        try {
+            const data = await getJSON("/api/exams");
+            const items = data.exams || [];
+            container.replaceChildren();
+
+            if (!items.length) {
+                showEmpty(container, "No exam information available.");
+            } else {
+                items.forEach(function (item) {
+                    const card = document.createElement("article");
+                    card.className = "feature-card";
+                    card.append(
+                        makeElement("h3", "", item.subject),
+                        makeElement("p", "", "Date: " + (item.exam_date || "Not provided")),
+                        makeElement("p", "", "Time: " + (item.start_time || "Not provided")),
+                        makeElement("p", "", "Venue: " + (item.venue || "Not provided")),
+                        makeElement("p", "feature-detail", item.notes || "No additional notes.")
+                    );
+                    container.appendChild(card);
+                });
+            }
+            status.textContent = items.length + " exam record(s) loaded.";
+        } catch (error) {
+            showEmpty(container, "Unable to load exam information.");
+            status.textContent = error.message;
+        }
+    }
+
+    async function loadLibrary() {
+        const container = document.getElementById("libraryList");
+        const status = document.getElementById("libraryStatus");
+        status.textContent = "Loading library information...";
+        showEmpty(container, "Loading library information...");
+
+        try {
+            const data = await getJSON("/api/library");
+            const items = data.library || [];
+            container.replaceChildren();
+
+            if (!items.length) {
+                showEmpty(container, "No library information available.");
+            } else {
+                items.forEach(function (item) {
+                    const card = document.createElement("article");
+                    card.className = "feature-card";
+                    card.append(
+                        makeElement("h3", "", item.title),
+                        makeElement("p", "feature-detail", item.details)
+                    );
+                    container.appendChild(card);
+                });
+            }
+            status.textContent = items.length + " library item(s) loaded.";
+        } catch (error) {
+            showEmpty(container, "Unable to load library information.");
+            status.textContent = error.message;
+        }
+    }
+
+    document.getElementById("loadTimetable")
+        .addEventListener("click", loadTimetable);
+    document.getElementById("timetableDay")
+        .addEventListener("change", loadTimetable);
+    document.getElementById("refreshAnnouncements")
+        .addEventListener("click", loadAnnouncements);
+    document.getElementById("refreshExams")
+        .addEventListener("click", loadExams);
+    document.getElementById("refreshLibrary")
+        .addEventListener("click", loadLibrary);
+
+    document.getElementById("campusSearch").addEventListener("input", function () {
+        const query = this.value.trim().toLowerCase();
+        const matches = Array.from(document.querySelectorAll(
+            ".announcement, .feature-card, .feature-item"
+        ));
+
+        matches.forEach(function (item) {
+            item.hidden = query !== "" &&
+                !item.textContent.toLowerCase().includes(query);
+        });
+    });
+
+    document.querySelectorAll(".sidebar-nav a").forEach(function (link) {
+        link.addEventListener("click", function () {
+            document.querySelectorAll(".sidebar-nav a").forEach(function (item) {
+                item.classList.remove("active");
+            });
+            link.classList.add("active");
+        });
+    });
+
+    // Load live data when the dashboard opens.
+    loadAnnouncements();
+    loadTimetable();
+    loadExams();
+    loadLibrary();
+</script>
+</body>
+</html>
